@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="uz">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Online Shop</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              "apple-blue": "#007AFF",
+              "apple-gray": "#1C1C1E",
+              "apple-gray-light": "#2C2C2E",
+              "apple-gray-dark": "#000000",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-apple-gray-dark text-white">
+    <div id="app">
+      <div
+        class="min-h-screen bg-gradient-to-br from-apple-gray-dark to-apple-gray"
+      >
+        <header
+          class="sticky top-0 z-50 backdrop-blur-xl bg-apple-gray/90 border-b border-apple-gray-light"
+        >
+          <div class="px-4 py-4">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-3">
+                <div
+                  class="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center"
+                >
+                  <svg
+                    class="w-5 h-5 text-white"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z"
+                    />
+                  </svg>
+                </div>
+                <h1 class="text-xl font-semibold">Shop</h1>
+              </div>
+              <div class="relative">
+                <button
+                  @click="showCart = !showCart"
+                  class="relative p-2 bg-apple-gray-light rounded-full hover:bg-apple-gray transition-all duration-200"
+                >
+                  <svg
+                    class="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L3 3H1M7 13L5.4 5M7 13l-2.293 2.293A1 1 0 005 16h12m-6-3v2a2 2 0 104 0v-2m-2 3.99l.01.01"
+                    />
+                  </svg>
+                  <span
+                    v-if="cartCount > 0"
+                    class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                    >{{cartCount}}</span
+                  >
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <div class="relative">
+          <transition name="slide-left">
+            <div
+              v-if="showCart"
+              class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+              @click="showCart = false"
+            >
+              <div
+                class="fixed right-0 top-0 h-full w-80 bg-apple-gray border-l border-apple-gray-light p-6 overflow-y-auto"
+                @click.stop
+              >
+                <div class="flex items-center justify-between mb-6">
+                  <h2 class="text-xl font-semibold">Savat</h2>
+                  <button
+                    @click="showCart = false"
+                    class="p-2 hover:bg-apple-gray-light rounded-full transition-colors"
+                  >
+                    <svg
+                      class="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <div
+                  v-if="cart.length === 0"
+                  class="text-center py-12 text-gray-400"
+                >
+                  <svg
+                    class="w-16 h-16 mx-auto mb-4 opacity-50"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M3 3h2l.4 2M7 13h10l4-8H5.4m-2.4 8L3 3H1M7 13L5.4 5M7 13l-2.293 2.293A1 1 0 005 16h12"
+                    />
+                  </svg>
+                  <p>Savat bo'sh</p>
+                </div>
+                <div v-else class="space-y-4">
+                  <div
+                    v-for="item in cart"
+                    :key="item.id"
+                    class="bg-apple-gray-light rounded-xl p-4"
+                  >
+                    <div class="flex items-center space-x-3">
+                      <img
+                        :src="item.image"
+                        :alt="item.name"
+                        class="w-12 h-12 rounded-lg object-cover"
+                      />
+                      <div class="flex-1">
+                        <h3 class="font-medium">{{item.name}}</h3>
+                        <p class="text-sm text-gray-400">${{item.price}}</p>
+                      </div>
+                      <div class="flex items-center space-x-2">
+                        <button
+                          @click="updateQuantity(item.id, item.quantity - 1)"
+                          class="w-8 h-8 bg-apple-gray rounded-full flex items-center justify-center hover:bg-gray-600 transition-colors"
+                        >
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M20 12H4"
+                            />
+                          </svg>
+                        </button>
+                        <span class="w-8 text-center">{{item.quantity}}</span>
+                        <button
+                          @click="updateQuantity(item.id, item.quantity + 1)"
+                          class="w-8 h-8 bg-apple-blue rounded-full flex items-center justify-center hover:bg-blue-600 transition-colors"
+                        >
+                          <svg
+                            class="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                            />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="border-t border-apple-gray-light pt-4 mt-6">
+                    <div class="flex justify-between items-center mb-4">
+                      <span class="text-lg font-semibold">Jami:</span>
+                      <span class="text-xl font-bold text-apple-blue"
+                        >${{totalPrice}}</span
+                      >
+                    </div>
+                    <button
+                      class="w-full bg-gradient-to-r from-apple-blue to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg"
+                    >
+                      Buyurtma berish
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </transition>
+        </div>
+
+        <main class="px-4 py-6">
+          <div class="mb-8">
+            <h2 class="text-2xl font-bold mb-2">Mahsulotlar</h2>
+            <p class="text-gray-400">Eng yaxshi mahsulotlarni toping</p>
+          </div>
+
+          <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div
+              v-for="product in products"
+              :key="product.id"
+              class="bg-apple-gray-light rounded-2xl overflow-hidden shadow-xl hover:shadow-2xl transform hover:-translate-y-1 transition-all duration-300"
+            >
+              <div class="relative">
+                <img
+                  :src="product.image"
+                  :alt="product.name"
+                  class="w-full h-48 object-cover"
+                />
+                <button
+                  @click="toggleLike(product.id)"
+                  class="absolute top-3 right-3 p-2 rounded-full backdrop-blur-sm transition-all duration-200"
+                  :class="product.liked ? 'bg-red-500/20 text-red-400' : 'bg-black/20 text-white hover:bg-black/40'"
+                >
+                  <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path
+                      fill-rule="evenodd"
+                      d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                </button>
+                <div
+                  v-if="product.discount"
+                  class="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold"
+                >
+                  -{{product.discount}}%
+                </div>
+              </div>
+              <div class="p-4">
+                <h3 class="font-semibold text-lg mb-1">{{product.name}}</h3>
+                <p class="text-gray-400 text-sm mb-3">{{product.category}}</p>
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xl font-bold text-apple-blue"
+                      >${{product.price}}</span
+                    >
+                    <span
+                      v-if="product.originalPrice"
+                      class="text-sm text-gray-500 line-through"
+                      >${{product.originalPrice}}</span
+                    >
+                  </div>
+                  <div class="flex items-center space-x-1 text-yellow-400">
+                    <svg
+                      class="w-4 h-4"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"
+                      />
+                    </svg>
+                    <span class="text-sm">{{product.rating}}</span>
+                  </div>
+                </div>
+                <button
+                  @click="addToCart(product)"
+                  class="w-full bg-gradient-to-r from-apple-blue to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 active:scale-95 transition-all duration-200 shadow-lg"
+                >
+                  Savatga qo'shish
+                </button>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <style>
+      .slide-left-enter-active,
+      .slide-left-leave-active {
+        transition: all 0.3s ease;
+      }
+      .slide-left-enter-from {
+        opacity: 0;
+      }
+      .slide-left-leave-to {
+        opacity: 0;
+      }
+      .slide-left-enter-from .fixed.right-0 {
+        transform: translateX(100%);
+      }
+      .slide-left-leave-to .fixed.right-0 {
+        transform: translateX(100%);
+      }
+
+      body {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+      }
+
+      @media (max-width: 480px) {
+        .fixed.right-0 {
+          width: 100vw;
+        }
+      }
+    </style>
+
+    <script>
+      const { createApp } = Vue;
+
+      createApp({
+        data() {
+          return {
+            showCart: false,
+            cart: [],
+            products: [
+              {
+                id: 1,
+                name: "iPhone 15 Pro",
+                category: "Smartfon",
+                price: 999,
+                originalPrice: 1099,
+                discount: 9,
+                rating: 4.8,
+                image:
+                  "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=400&h=400&fit=crop",
+                liked: false,
+              },
+              {
+                id: 2,
+                name: "MacBook Air M3",
+                category: "Noutbuk",
+                price: 1299,
+                rating: 4.9,
+                image:
+                  "https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop",
+                liked: false,
+              },
+              {
+                id: 3,
+                name: "AirPods Pro",
+                category: "Audio",
+                price: 249,
+                originalPrice: 279,
+                discount: 11,
+                rating: 4.7,
+                image:
+                  "https://images.unsplash.com/photo-1606841837239-c5a1a4a07af7?w=400&h=400&fit=crop",
+                liked: false,
+              },
+              {
+                id: 4,
+                name: "iPad Pro 12.9",
+                category: "Planshet",
+                price: 1099,
+                rating: 4.8,
+                image:
+                  "https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=400&h=400&fit=crop",
+                liked: false,
+              },
+              {
+                id: 5,
+                name: "Apple Watch Ultra",
+                category: "Soat",
+                price: 799,
+                originalPrice: 849,
+                discount: 6,
+                rating: 4.6,
+                image:
+                  "https://images.unsplash.com/photo-1434493789847-2f02dc6ca35d?w=400&h=400&fit=crop",
+                liked: false,
+              },
+              {
+                id: 6,
+                name: "Mac Studio",
+                category: "Kompyuter",
+                price: 1999,
+                rating: 4.9,
+                image:
+                  "https://images.unsplash.com/photo-1593640408182-31c70c8268f5?w=400&h=400&fit=crop",
+                liked: false,
+              },
+              {
+                id: 7,
+                name: "Studio Display",
+                category: "Monitor",
+                price: 1599,
+                originalPrice: 1699,
+                discount: 6,
+                rating: 4.5,
+                image:
+                  "https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=400&h=400&fit=crop",
+                liked: false,
+              },
+              {
+                id: 8,
+                name: "Magic Keyboard",
+                category: "Aksessuar",
+                price: 299,
+                rating: 4.4,
+                image:
+                  "https://images.unsplash.com/photo-1587829741301-dc798b83add3?w=400&h=400&fit=crop",
+                liked: false,
+              },
+            ],
+          };
+        },
+        computed: {
+          cartCount() {
+            return this.cart.reduce((total, item) => total + item.quantity, 0);
+          },
+          totalPrice() {
+            return this.cart.reduce(
+              (total, item) => total + item.price * item.quantity,
+              0
+            );
+          },
+        },
+        methods: {
+          addToCart(product) {
+            const existingItem = this.cart.find(
+              (item) => item.id === product.id
+            );
+            if (existingItem) {
+              existingItem.quantity++;
+            } else {
+              this.cart.push({
+                ...product,
+                quantity: 1,
+              });
+            }
+          },
+          updateQuantity(productId, newQuantity) {
+            if (newQuantity <= 0) {
+              this.cart = this.cart.filter((item) => item.id !== productId);
+            } else {
+              const item = this.cart.find((item) => item.id === productId);
+              if (item) {
+                item.quantity = newQuantity;
+              }
+            }
+          },
+          toggleLike(productId) {
+            const product = this.products.find((p) => p.id === productId);
+            if (product) {
+              product.liked = !product.liked;
+            }
+          },
+        },
+      }).mount("#app");
+    </script>
+  </body>
+</html>
