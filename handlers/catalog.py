@@ -1,56 +1,88 @@
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram import Router, types, F
+from aiogram.filters import Command
+from aiogram.types import (
+    InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery, WebAppInfo
+)
 
-from keyboards.keyboards import categories_kb, products_kb, back_to_categories_kb
-from services import get_products_by_category, get_product_by_id
+router = Router()
+
+CATEGORIES = {
+    "TV": ["Samsung", "LG", "Sony"],
+    "Smartfonlar": ["iPhone", "Samsung", "Xiaomi"],
+    "Maishiy texnika": ["Muzlatgich", "Kir yuvish mashinasi", "Konditsioner"]
+}
 
 
-router: Router = Router()
+def categories_kb():
+    buttons = [
+        [InlineKeyboardButton(text=cat, callback_data=f"cat:{cat}")]
+        for cat in CATEGORIES.keys()
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-@router.message(F.text == "/start")
-async def cmd_start(message: Message):
-    text = (
-        "Assalomu alaykum! Bu bot internet do'kon.\n\n"
-        "Quyidagi menyudan kategoriyani tanlang."
-    )
-    await message.answer(text, reply_markup=categories_kb())
+def products_kb(category):
+    buttons = [
+        [InlineKeyboardButton(text=prod, callback_data=f"prd:{prod}")]
+        for prod in CATEGORIES.get(category, [])
+    ]
+    buttons.append([InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back:cats")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+@router.message(Command("start"))
+async def cmd_start(message: types.Message):
+    await message.answer("Kategoriyani tanlang:", reply_markup=categories_kb())
 
 
 @router.callback_query(F.data.startswith("cat:"))
 async def on_category_selected(call: CallbackQuery):
-    slug = call.data.split(":", 1)[1]
-    products = get_products_by_category(slug)
+    category = call.data.split(":", 1)[1]
+    products = CATEGORIES.get(category)
     if not products:
-        await call.message.edit_text("Bu kategoriyada mahsulotlar topilmadi.", reply_markup=back_to_categories_kb())
+        await call.message.edit_text(
+            "Bu kategoriyada mahsulotlar topilmadi.", 
+            reply_markup=categories_kb()
+        )
         await call.answer()
         return
     await call.message.edit_text(
         "Mahsulotni tanlang:",
-        reply_markup=products_kb(slug)
+        reply_markup=products_kb(category)
     )
     await call.answer()
 
 
 @router.callback_query(F.data.startswith("prd:"))
 async def on_product_selected(call: CallbackQuery):
-    product_id = call.data.split(":", 1)[1]
-    product = get_product_by_id(product_id)
-    if not product:
-        await call.answer("Mahsulot topilmadi", show_alert=True)
-        return
+    product_name = call.data.split(":", 1)[1]
+    text = (
+        f"<b>{product_name}</b>\n"
+        f"Narxi: <b>100000 so'm</b>\n\n"
+        f"Mahsulot haqida qisqacha ma'lumot."
+    )
 
-    price = f"{int(product.price)} {product.currency}"
-    desc = product.description or ""
-    text = f"<b>{product.title}</b>\nNarxi: <b>{price}</b>\n\n{desc}"
-    await call.message.edit_text(text, reply_markup=back_to_categories_kb())
+    # ✅ to‘g‘rilangan joy: call.message.answer_photo ishlatiladi
+    await call.message.answer_photo(
+        "AgACAgIAAxkBAANfaLwD8bRuMJK-iz2VmX1ignBVWhgAAuP0MRthx-FJThFJbJqdrrUBAAMCAANzAAM2BA",
+        caption=text,
+        parse_mode="HTML",
+        reply_markup=InlineKeyboardMarkup(
+            inline_keyboard=[
+                [InlineKeyboardButton(text="🌐 Web do'konda xarid qilish", web_app=WebAppInfo(url="https://chat-magazine-bot.vercel.app/"))],
+                [InlineKeyboardButton(text="🛒 Xarid qilish", callback_data=f"buy_{product_name}")],
+                [InlineKeyboardButton(text="⬅️ Orqaga", callback_data="back:cats")]
+            ]
+        )
+    )
+
     await call.answer()
 
 
-@router.callback_query(F.data == "back:root")
 @router.callback_query(F.data == "back:cats")
 async def back_to_categories(call: CallbackQuery):
-    await call.message.edit_text(
+    await call.message.answer(
         "Kategoriyani tanlang:", reply_markup=categories_kb()
     )
     await call.answer()
+

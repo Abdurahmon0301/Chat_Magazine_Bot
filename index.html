@@ -192,6 +192,7 @@
                       >
                     </div>
                     <button
+                      @click="showOrderForm = true"
                       class="w-full bg-gradient-to-r from-apple-blue to-blue-600 text-white py-3 rounded-xl font-semibold hover:from-blue-600 hover:to-blue-700 transition-all duration-200 shadow-lg"
                     >
                       Buyurtma berish
@@ -203,12 +204,60 @@
           </transition>
         </div>
 
+        <!-- Order form -->
+        <div
+          v-if="showOrderForm"
+          class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+        >
+          <div class="bg-apple-gray-light p-6 rounded-2xl shadow-xl w-96">
+            <h2 class="text-xl font-semibold mb-4">Buyurtma berish</h2>
+            <div class="space-y-4">
+              <input
+                v-model="orderForm.name"
+                type="text"
+                placeholder="Ism"
+                class="w-full p-3 rounded-lg bg-apple-gray border border-gray-600 focus:outline-none"
+              />
+              <input
+                v-model="orderForm.surname"
+                type="text"
+                placeholder="Familiya"
+                class="w-full p-3 rounded-lg bg-apple-gray border border-gray-600 focus:outline-none"
+              />
+              <input
+                v-model="orderForm.phone"
+                type="text"
+                placeholder="+998901234567"
+                class="w-full p-3 rounded-lg bg-apple-gray border border-gray-600 focus:outline-none"
+              />
+              <textarea
+                v-model="orderForm.address"
+                placeholder="Manzil"
+                class="w-full p-3 rounded-lg bg-apple-gray border border-gray-600 focus:outline-none"
+              ></textarea>
+            </div>
+            <div class="mt-6 flex justify-between">
+              <button
+                @click="showOrderForm = false"
+                class="px-4 py-2 bg-gray-600 rounded-lg"
+              >
+                Bekor qilish
+              </button>
+              <button
+                @click="submitOrder"
+                class="px-4 py-2 bg-apple-blue rounded-lg"
+              >
+                Buyurtma berish
+              </button>
+            </div>
+          </div>
+        </div>
+
         <main class="px-4 py-6">
           <div class="mb-8">
             <h2 class="text-2xl font-bold mb-2">Mahsulotlar</h2>
             <p class="text-gray-400">Eng yaxshi mahsulotlarni toping</p>
           </div>
-
           <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             <div
               v-for="product in products"
@@ -239,7 +288,7 @@
                   class="absolute top-3 left-3 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold"
                 >
                   -{{product.discount}}%
-                </div>
+                </img>
               </div>
               <div class="p-4">
                 <h3 class="font-semibold text-lg mb-1">{{product.name}}</h3>
@@ -286,26 +335,17 @@
       .slide-left-leave-active {
         transition: all 0.3s ease;
       }
-      .slide-left-enter-from {
-        opacity: 0;
-      }
+      .slide-left-enter-from,
       .slide-left-leave-to {
         opacity: 0;
       }
-      .slide-left-enter-from .fixed.right-0 {
-        transform: translateX(100%);
-      }
+      .slide-left-enter-from .fixed.right-0,
       .slide-left-leave-to .fixed.right-0 {
         transform: translateX(100%);
       }
-
       body {
-        -webkit-user-select: none;
-        -moz-user-select: none;
-        -ms-user-select: none;
         user-select: none;
       }
-
       @media (max-width: 480px) {
         .fixed.right-0 {
           width: 100vw;
@@ -315,12 +355,13 @@
 
     <script>
       const { createApp } = Vue;
-
       createApp({
         data() {
           return {
             showCart: false,
+            showOrderForm: false,
             cart: [],
+            orderForm: { name: "", surname: "", phone: "", address: "" },
             products: [
               {
                 id: 1,
@@ -415,44 +456,46 @@
         },
         computed: {
           cartCount() {
-            return this.cart.reduce((total, item) => total + item.quantity, 0);
+            return this.cart.reduce((t, i) => t + i.quantity, 0);
           },
           totalPrice() {
-            return this.cart.reduce(
-              (total, item) => total + item.price * item.quantity,
-              0
-            );
+            return this.cart.reduce((t, i) => t + i.price * i.quantity, 0);
           },
         },
         methods: {
-          addToCart(product) {
-            const existingItem = this.cart.find(
-              (item) => item.id === product.id
-            );
-            if (existingItem) {
-              existingItem.quantity++;
-            } else {
-              this.cart.push({
-                ...product,
-                quantity: 1,
-              });
+          addToCart(p) {
+            const e = this.cart.find((i) => i.id === p.id);
+            e ? e.quantity++ : this.cart.push({ ...p, quantity: 1 });
+          },
+          updateQuantity(id, q) {
+            if (q <= 0) this.cart = this.cart.filter((i) => i.id !== id);
+            else {
+              const i = this.cart.find((i) => i.id === id);
+              if (i) i.quantity = q;
             }
           },
-          updateQuantity(productId, newQuantity) {
-            if (newQuantity <= 0) {
-              this.cart = this.cart.filter((item) => item.id !== productId);
-            } else {
-              const item = this.cart.find((item) => item.id === productId);
-              if (item) {
-                item.quantity = newQuantity;
-              }
-            }
+          toggleLike(id) {
+            const p = this.products.find((x) => x.id === id);
+            if (p) p.liked = !p.liked;
           },
-          toggleLike(productId) {
-            const product = this.products.find((p) => p.id === productId);
-            if (product) {
-              product.liked = !product.liked;
+          submitOrder() {
+            if (
+              !this.orderForm.name ||
+              !this.orderForm.phone ||
+              !this.orderForm.address
+            ) {
+              alert("❌ Iltimos barcha maydonlarni to‘ldiring!");
+              return;
             }
+            alert("✅ Buyurtma qabul qilindi!");
+            fetch("https://chat-magazine-bot.vercel.app/", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ cart: this.cart, ...this.orderForm }),
+            });
+            this.showOrderForm = false;
+            this.cart = [];
+            this.orderForm = { name: "", surname: "", phone: "", address: "" };
           },
         },
       }).mount("#app");
